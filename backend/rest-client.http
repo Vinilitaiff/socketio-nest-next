@@ -29,9 +29,9 @@ content-type: application/json
 }
 ###
 
-PUT http://localhost:3000/streamer/1/update HTTP/1.1
+PUT http://localhost:3000/streamer/2/update HTTP/1.1
 content-type: application/json
 
 {
-    "status": false
+    "status": true
 }

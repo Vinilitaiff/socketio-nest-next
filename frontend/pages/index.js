@@ -1,0 +1,76 @@
+import Head from "next/head";
+import { useCallback, useContext, useEffect, useState } from "react";
+import { SocketContext } from "../context/socket";
+import { getAllStreamers } from "../lib/api";
+import styles from "../styles/Home.module.css";
+
+export default function Home({ allStreamers }) {
+  const socket = useContext(SocketContext);
+  const [streamers, setStreamers] = useState(allStreamers, []);
+
+  const handleStatus = useCallback((payload) => {
+    console.log(payload);
+    const index = streamers.findIndex((item) => item.key === payload.room);
+    if (index >= 0) {
+      streamers[index].status = payload.status;
+      setStreamers(() => [...streamers]);
+    }
+  });
+
+  useEffect(() => {
+    if (allStreamers.length > 0) {
+      allStreamers.forEach((item) => {
+        socket.emit("joinStatus", item.key);
+      });
+    }
+
+    socket.on("statusToClient", handleStatus);
+  }, [socket, allStreamers, handleStatus]);
+
+  return (
+    <div className={styles.container}>
+      <Head>
+        <title>Socket.io</title>
+        <link rel="icon" href="/favicon.ico" />
+      </Head>
+
+      <main className={styles.main}>
+        <p className={styles.description}>Acompanhe os Streamers</p>
+
+        <div className={styles.grid}>
+          {streamers.map((item, key) => (
+            <a
+              key={key}
+              href={`https://twitch.tv/${item.key}`}
+              className={styles.card}
+              target="_blank"
+              rel="noreferrer"
+            >
+              <div className="txt">
+                <h2>{item.name}</h2>
+                {item.status === true ? (
+                  <p>
+                    <span className={`${styles.status} ${styles.on}`}></span>{" "}
+                    Live
+                  </p>
+                ) : (
+                  <p>
+                    <span className={`${styles.status} ${styles.off}`}></span>{" "}
+                    Offline
+                  </p>
+                )}
+              </div>
+            </a>
+          ))}
+        </div>
+      </main>
+    </div>
+  );
+}
+
+export async function getStaticProps() {
+  const allStreamers = await getAllStreamers();
+  return {
+    props: { allStreamers },
+  };
+}
