@@ -4,12 +4,14 @@ import { DeleteResult, Repository } from 'typeorm';
 import { CreateStreamerDto } from './dto/create-streamer.dto';
 import { UpdateStreamerDto } from './dto/update-streamer.dto';
 import { Streamer } from './entities/streamer.entity';
+import { StreamerGateway } from './streamer.gateway';
 
 @Injectable()
 export class StreamerService {
   constructor(
     @InjectRepository(Streamer)
     private streamerRepository: Repository<Streamer>,
+    private streamerGateway: StreamerGateway,
   ) {}
 
   async create(data: CreateStreamerDto): Promise<Streamer> {
@@ -32,7 +34,12 @@ export class StreamerService {
       ...data,
     });
 
-    //add funcao do socket
+    if (streamer.status !== updated.status) {
+      this.streamerGateway.handleStatus({
+        room: updated.key,
+        status: updated.status,
+      });
+    }
 
     return updated;
   }
